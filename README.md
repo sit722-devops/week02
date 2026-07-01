@@ -9,12 +9,12 @@ This example demonstrates a single **Product Microservice** built with FastAPI a
 3.  **PostgreSQL Database:**
     - You need a local PostgreSQL server instance.
     - **Recommended:** Install PostgreSQL directly on your machine (e.g., via Homebrew for macOS, apt for Linux, or a standalone installer for Windows). Download from [https://www.postgresql.org/download/](https://www.postgresql.org/download/)
-    - **Alternative (using Podman for DB only):** If you prefer not to install PostgreSQL directly, you can run a PostgreSQL container temporarily:
+    - **Alternative (using Docker for DB only):** If you prefer not to install PostgreSQL directly, you can run a PostgreSQL container temporarily:
       ```bash
-      podman run --name local-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=products -p 5432:5432 -d postgres:15-alpine
+      docker run --name local-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=products -p 5432:5432 -d postgres:15-alpine
       ```
       Remember to stop/remove it when done: `podman stop local-postgres && podman rm local-postgres`
-4. Database Setup (Ignore thisstep )
+4. Database Setup (Ignore this step )
 
     The Product Service expects a PostgreSQL database named `products` with user `postgres` and password `postgres`.
 
@@ -26,4 +26,4 @@ This example demonstrates a single **Product Microservice** built with FastAPI a
         CREATE DATABASE products;
         ```
         (If you used the Podman command to run PostgreSQL locally, this database will be created automatically by the `postgres:15-alpine` image due to the `POSTGRES_DB` environment variable.)
-5.  Running the Product Service (Using Podman)
+5.  Running the Product Service (Using Docker)
