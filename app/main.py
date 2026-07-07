@@ -1,8 +1,8 @@
 # app/main.py
 
+import asyncio
 import logging
-import sys
-import time
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.exc import OperationalError
@@ -19,26 +19,20 @@ logging.basicConfig(
 
 logger = logging.getLogger("student-service")
 
-app = FastAPI(
-    title="Student Service",
-    description="Week 02 Student Service with FastAPI, PostgreSQL and Docker",
-    version="2.0.0"
-)
-
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     max_retries = 10
     retry_delay_seconds = 5
 
-    for attempt in range(max_retries):
+    for attempt in range(1, max_retries + 1):
         try:
             logger.info(
                 f"Connecting to PostgreSQL and creating tables "
-                f"(attempt {attempt + 1}/{max_retries})..."
+                f"(attempt {attempt}/{max_retries})..."
             )
 
-            Base.metadata.create_all(bind=engine)
+            with engine.begin() as connection:
+                Base.metadata.create_all(bind=connection)
 
             logger.info("PostgreSQL connection successful. Tables are ready.")
             break
@@ -46,19 +40,29 @@ async def startup_event():
         except OperationalError as error:
             logger.warning(f"PostgreSQL connection failed: {error}")
 
-            if attempt < max_retries - 1:
-                logger.info(f"Retrying in {retry_delay_seconds} seconds...")
-                time.sleep(retry_delay_seconds)
-            else:
+            if attempt == max_retries:
                 logger.critical("PostgreSQL connection failed after all retries.")
-                sys.exit(1)
+                raise RuntimeError("Database startup failed") from error
 
-        except Exception as error:
+            logger.info(f"Retrying in {retry_delay_seconds} seconds...")
+            await asyncio.sleep(retry_delay_seconds)
+
+        except Exception:
             logger.critical(
-                f"Unexpected error during database startup: {error}",
+                "Unexpected error during database startup",
                 exc_info=True
             )
-            sys.exit(1)
+            raise
+
+    yield
+
+
+app = FastAPI(
+    title="Student Service",
+    description="Week 02 Student Service with FastAPI, PostgreSQL and Docker",
+    version="2.0.0",
+    lifespan=lifespan
+)
 
 
 @app.get("/")
