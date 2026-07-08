@@ -3,5 +3,5 @@ uvicorn
 sqlalchemy
 psycopg2-binary
 pytest
-httpx2
+httpx
 email-validator
